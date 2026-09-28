@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FestPass — College Fest Ticketing & QR Check-in System">
+  <title>FestPass — College Fest Ticketing & QR Check-in</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'><path d='M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4zm4-2h10v2H7zm0 8h10v2H7z'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">FP</div>
+        <div class="brand-text">
+          <h1>FestPass</h1>
+          <p>College Fest Ticketing & QR Check-in</p>
+        </div>
+      </div>
+      <nav class="nav-links" aria-label="Main Navigation">
+        <button id="nav-dashboard" class="nav-btn active" data-tab="dashboard">
+          <span>📊</span><span>Dashboard</span>
+        </button>
+        <button id="nav-events" class="nav-btn" data-tab="events">
+          <span>🎪</span><span>Events</span>
+        </button>
+        <button id="nav-issue-ticket" class="nav-btn" data-tab="issue-ticket">
+          <span>🎟️</span><span>Issue Ticket</span>
+        </button>
+        <button id="nav-checkin" class="nav-btn" data-tab="checkin">
+          <span>📱</span><span>QR Check-in</span>
+        </button>
+        <button id="nav-attendance" class="nav-btn" data-tab="attendance">
+          <span>👥</span><span>Attendance</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+
+    <!-- Global Alert Banner Area -->
+    <div id="global-alert-container"></div>
+
+    <!-- ==================== SECTION 1: DASHBOARD ==================== -->
+    <section id="section-dashboard" class="page-section active">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Dashboard Overview</h2>
+          <p className="page-subtitle" style="color: var(--text-muted); font-size: 0.875rem;">
+            Live operations, ticket sales, and attendance status
+          </p>
+        </div>
+        <button id="btn-refresh-dashboard" class="btn btn-secondary btn-sm">
+          🔄 Refresh
+        </button>
+      </div>
+
+      <!-- KPI Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon indigo">🎪</div>
+          <div>
+            <div id="dash-total-events" class="metric-value">--</div>
+            <div class="metric-label">Total Events</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon purple">🎟️</div>
+          <div>
+            <div id="dash-tickets-issued" class="metric-value">--</div>
+            <div class="metric-label">Tickets Issued</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon green">👥</div>
+          <div>
+            <div id="dash-checked-in" class="metric-value">--</div>
+            <div class="metric-label">Checked-in Attendees</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon amber">🚪</div>
+          <div>
+            <div id="dash-available-capacity" class="metric-value">--</div>
+            <div class="metric-label">Available Capacity</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events Quick View Card -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <h3 class="card-title">Configured Fest Events</h3>
+            <p class="card-subtitle">Real-time status of events and ticket bookings</p>
+          </div>
+          <button id="btn-goto-create-event" class="btn btn-primary btn-sm">
+            + Create New Event
+          </button>
+        </div>
+
+        <div id="dashboard-events-loading" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading events from backend...</p>
+        </div>
+
+        <div id="dashboard-events-empty" class="empty-state" style="display: none;">
+          <p>No events registered yet.</p>
+        </div>
+
+        <div id="dashboard-events-table-container" class="table-container" style="display: none;">
+          <table class="fest-table">
+            <thead>
+              <tr>
+                <th>Event Name</th>
+                <th>Venue</th>
+                <th>Date & Time</th>
+                <th>Ticket Price</th>
+                <th>Issued / Capacity</th>
+                <th>Quick Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 2: EVENTS ==================== -->
+    <section id="section-events" class="page-section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Fest Event Management</h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">
+            Create events, configure venue capacities, and manage existing schedules
+          </p>
+        </div>
+      </div>
+
+      <!-- Create Event Card -->
+      <div class="card">
+        <h3 class="card-title">+ Create New Fest Event</h3>
+        <p class="card-subtitle">Register a new event with total ticket capacity and ticket pricing</p>
+
+        <form id="create-event-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="event-name">
+                Event Name <span class="required">*</span>
+              </label>
+              <input id="event-name" name="name" type="text" class="form-input" placeholder="e.g. Battle of the Bands" required>
+              <div id="err-event-name" class="field-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="event-venue">
+                Venue <span class="required">*</span>
+              </label>
+              <input id="event-venue" name="venue" type="text" class="form-input" placeholder="e.g. Main Auditorium" required>
+              <div id="err-event-venue" class="field-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="event-date">
+                Event Date & Time <span class="required">*</span>
+              </label>
+              <input id="event-date" name="eventDate" type="datetime-local" class="form-input" required>
+              <div id="err-event-date" class="field-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="event-capacity">
+                Capacity (Seats) <span class="required">*</span>
+              </label>
+              <input id="event-capacity" name="capacity" type="number" min="1" class="form-input" placeholder="e.g. 100" required>
+              <div id="err-event-capacity" class="field-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="event-price">
+                Ticket Price (₹) <span class="required">*</span>
+              </label>
+              <input id="event-price" name="ticketPrice" type="number" min="0" step="0.01" class="form-input" placeholder="e.g. 250.00" required>
+              <div id="err-event-price" class="field-error"></div>
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label" for="event-desc">
+                Description
+              </label>
+              <textarea id="event-desc" name="description" class="form-textarea" placeholder="Brief event description, rules, or guest info..."></textarea>
+              <div id="err-event-desc" class="field-error"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            <button id="btn-submit-event" type="submit" class="btn btn-primary">
+              Register Event
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Events List Card -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <h3 class="card-title">Existing Events</h3>
+            <p class="card-subtitle">List of events currently registered on the backend</p>
+          </div>
+          <button id="btn-refresh-events" class="btn btn-secondary btn-sm">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div id="events-loading" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading events...</p>
+        </div>
+
+        <div id="events-empty" class="empty-state" style="display: none;">
+          <p>No events registered yet.</p>
+        </div>
+
+        <div id="events-table-container" class="table-container" style="display: none;">
+          <table class="fest-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name & Description</th>
+                <th>Venue</th>
+                <th>Date & Time</th>
+                <th>Price</th>
+                <th>Capacity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 3: ISSUE TICKET ==================== -->
+    <section id="section-issue-ticket" class="page-section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Issue Fest Ticket</h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">
+            Generate digital entry passes with secure, unguessable QR codes
+          </p>
+        </div>
+      </div>
+
+      <!-- Ticket Issue Result View (Hidden initially) -->
+      <div id="ticket-result-container" style="display: none;">
+        <div class="ticket-pass">
+          <div class="ticket-header">
+            <span class="badge badge-success" style="margin-bottom: 0.5rem;">
+              ✓ Ticket Issued Successfully
+            </span>
+            <h3 id="res-event-name">Event Name</h3>
+            <p>Show this QR code at the check-in gate for entry</p>
+          </div>
+
+          <div class="ticket-qr">
+            <img id="res-qr-image" src="" alt="Ticket QR Code">
+            <div>
+              <span id="res-qr-code" class="qr-code-pill">FP-xxxx-xxxx</span>
+            </div>
+          </div>
+
+          <div class="ticket-details-grid">
+            <div>
+              <div class="detail-label">Ticket ID</div>
+              <div id="res-ticket-id" class="detail-value">#--</div>
+            </div>
+            <div>
+              <div class="detail-label">Ticket Price</div>
+              <div id="res-ticket-price" class="detail-value">₹0.00</div>
+            </div>
+            <div>
+              <div class="detail-label">Attendee Name</div>
+              <div id="res-attendee-name" class="detail-value">--</div>
+            </div>
+            <div>
+              <div class="detail-label">Email</div>
+              <div id="res-attendee-email" class="detail-value">--</div>
+            </div>
+            <div id="res-phone-container" style="grid-column: 1 / -1; display: none;">
+              <div class="detail-label">Phone</div>
+              <div id="res-attendee-phone" class="detail-value">--</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; justify-content: center;">
+            <button id="btn-print-ticket" class="btn btn-secondary">
+              🖨️ Print Ticket
+            </button>
+            <button id="btn-issue-another" class="btn btn-primary">
+              + Issue Another Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticket Issue Form Card -->
+      <div id="ticket-form-card" class="card" style="max-width: 650px; margin: 0 auto;">
+        <h3 class="card-title">Attendee Registration</h3>
+        <p class="card-subtitle">Select an event and enter attendee details to generate an entry pass</p>
+
+        <form id="issue-ticket-form">
+          <div class="form-group">
+            <label class="form-label" for="ticket-event-id">
+              Select Fest Event <span class="required">*</span>
+            </label>
+            <select id="ticket-event-id" name="eventId" class="form-select" required>
+              <option value="">-- Choose an Event --</option>
+            </select>
+            <div id="err-ticket-event" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="attendee-name">
+              Attendee Full Name <span class="required">*</span>
+            </label>
+            <input id="attendee-name" name="attendeeName" type="text" class="form-input" placeholder="e.g. Rohit Sharma" required>
+            <div id="err-attendee-name" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="attendee-email">
+              Attendee Email Address <span class="required">*</span>
+            </label>
+            <input id="attendee-email" name="attendeeEmail" type="email" class="form-input" placeholder="e.g. rohit.sharma@college.edu" required>
+            <div id="err-attendee-email" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="attendee-phone">
+              Attendee Phone Number (Optional)
+            </label>
+            <input id="attendee-phone" name="attendeePhone" type="tel" class="form-input" placeholder="e.g. +91 9876543210">
+            <div id="err-attendee-phone" class="field-error"></div>
+          </div>
+
+          <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+            <button id="btn-submit-ticket" type="submit" class="btn btn-primary">
+              🎟️ Issue Ticket
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 4: QR CHECK-IN ==================== -->
+    <section id="section-checkin" class="page-section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Entrance Gate QR Check-in</h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">
+            Validate attendee QR codes and enforce one-time fest check-in
+          </p>
+        </div>
+      </div>
+
+      <div class="card" style="max-width: 650px; margin: 0 auto;">
+        <h3 class="card-title">Validate Ticket</h3>
+        <p class="card-subtitle">
+          Enter or paste the ticket's QR value to verify admission
+        </p>
+
+        <form id="checkin-form">
+          <div class="form-group">
+            <label class="form-label" for="checkin-qr-input">
+              QR Code Value <span class="required">*</span>
+            </label>
+            <div style="display: flex; gap: 0.6rem;">
+              <input
+                id="checkin-qr-input"
+                type="text"
+                class="form-input"
+                placeholder="e.g. FP-12345678-..."
+                required
+                autocomplete="off"
+              >
+              <button id="btn-submit-checkin" type="submit" class="btn btn-primary" style="white-space: nowrap;">
+                [ Check In ]
+              </button>
+            </div>
+            <div id="checkin-field-error" class="field-error"></div>
+          </div>
+        </form>
+
+        <!-- Checkin Alert Container -->
+        <div id="checkin-alert-container" style="margin-top: 1.25rem;"></div>
+
+        <!-- Validated Ticket Result Display -->
+        <div id="checkin-result-card" style="display: none; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span class="badge badge-success">✓ Ticket checked in successfully</span>
+            <span id="checkin-res-ticket-id" style="font-size: 0.8rem; color: var(--text-muted);">Ticket #--</span>
+          </div>
+
+          <h4 id="checkin-res-attendee" style="font-size: 1.15rem; color: var(--text-main); margin-bottom: 0.5rem;">
+            Attendee Name
+          </h4>
+
+          <div class="ticket-details-grid" style="margin-top: 0.5rem; padding-top: 0.5rem;">
+            <div>
+              <div class="detail-label">Event</div>
+              <div id="checkin-res-event" class="detail-value">--</div>
+            </div>
+            <div>
+              <div class="detail-label">Check-in Time</div>
+              <div id="checkin-res-time" class="detail-value">--</div>
+            </div>
+            <div>
+              <div class="detail-label">Updated Headcount</div>
+              <div id="checkin-res-headcount" class="detail-value">--</div>
+            </div>
+            <div>
+              <div class="detail-label">QR Code</div>
+              <div id="checkin-res-qr" class="detail-value" style="font-family: monospace; font-size: 0.8rem;">--</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+            <button id="btn-checkin-next" class="btn btn-secondary btn-sm">
+              Check In Next Attendee
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 5: ATTENDANCE ==================== -->
+    <section id="section-attendance" class="page-section">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Live Fest Attendance</h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">
+            Monitor live venue headcount against total capacity
+          </p>
+        </div>
+        <button id="btn-refresh-attendance" class="btn btn-secondary btn-sm">
+          🔄 Refresh Attendance
+        </button>
+      </div>
+
+      <div class="card" style="max-width: 750px; margin: 0 auto;">
+        <div class="form-group">
+          <label class="form-label" for="attendance-event-select">
+            Select Fest Event:
+          </label>
+          <select id="attendance-event-select" class="form-select">
+            <option value="">-- Choose an Event --</option>
+          </select>
+        </div>
+
+        <div id="attendance-loading" class="loading-container" style="display: none;">
+          <div class="spinner"></div>
+          <p>Fetching attendance metrics...</p>
+        </div>
+
+        <div id="attendance-content" style="display: none; margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <h3 id="att-event-name" style="font-size: 1.35rem; font-weight: 700;">Event Name</h3>
+            <span id="att-event-badge" class="badge badge-info">Event #--</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-container">
+            <div class="progress-labels">
+              <span id="att-progress-label">Checked In: 0 / 0</span>
+              <span id="att-progress-pct">0% Occupied</span>
+            </div>
+            <div class="progress-track">
+              <div id="att-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Metric Breakdown Grid -->
+          <div class="metrics-grid" style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
+            <div class="metric-card">
+              <div class="metric-icon indigo">🏢</div>
+              <div>
+                <div id="att-capacity" class="metric-value">0</div>
+                <div class="metric-label">Total Capacity</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon purple">🎟️</div>
+              <div>
+                <div id="att-issued" class="metric-value">0</div>
+                <div class="metric-label">Issued Tickets</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon green">✅</div>
+              <div>
+                <div id="att-headcount" class="metric-value">0</div>
+                <div class="metric-label">Checked-in Headcount</div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon amber">🚪</div>
+              <div>
+                <div id="att-remaining" class="metric-value">0</div>
+                <div class="metric-label">Remaining Capacity</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="att-summary-text" style="margin-top: 1.25rem; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-size: 0.85rem; color: var(--text-muted);">
+            --
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Edit Event Modal Dialog -->
+  <div id="edit-event-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" onclick="event.stopPropagation();">
+      <div class="modal-header">
+        <h2 id="edit-modal-title">Edit Event</h2>
+        <button id="btn-close-edit-modal" class="modal-close">&times;</button>
+      </div>
+
+      <form id="edit-event-form">
+        <input id="edit-event-id" type="hidden">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Event Name</label>
+            <input id="edit-name" name="name" type="text" class="form-input" required>
+            <div id="err-edit-name" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-venue">Venue</label>
+            <input id="edit-venue" name="venue" type="text" class="form-input" required>
+            <div id="err-edit-venue" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-date">Event Date & Time</label>
+            <input id="edit-date" name="eventDate" type="datetime-local" class="form-input">
+            <div id="err-edit-date" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label id="edit-capacity-label" class="form-label" for="edit-capacity">Capacity</label>
+            <input id="edit-capacity" name="capacity" type="number" min="1" class="form-input" required>
+            <div id="err-edit-capacity" class="field-error"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-price">Ticket Price (₹)</label>
+            <input id="edit-price" name="ticketPrice" type="number" min="0" step="0.01" class="form-input" required>
+            <div id="err-edit-price" class="field-error"></div>
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label" for="edit-desc">Description</label>
+            <textarea id="edit-desc" name="description" class="form-textarea"></textarea>
+            <div id="err-edit-desc" class="field-error"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button id="btn-cancel-edit-modal" type="button" class="btn btn-secondary">
+            Cancel
+          </button>
+          <button id="btn-save-edit-event" type="submit" class="btn btn-primary">
+            Save Updates
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <p><strong>FestPass</strong> — College Fest Ticketing & QR Check-in System &copy; 2026</p>
+    <p style="font-size: 0.75rem; margin-top: 0.25rem; color: var(--text-light);">
+      Connected to Spring Boot API on <code>http://localhost:8080</code>
+    </p>
+  </footer>
+
+  <!-- Application Logic in pure JavaScript -->
+  <script type="module" src="./src/js/app.js"></script>
+</body>
+</html>
