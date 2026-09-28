@@ -1,0 +1,348 @@
+{
+	"info": {
+		"_postman_id": "a93bf40d-b2a1-4328-89c0-67c80521e104",
+		"name": "FestPass — College Fest Ticketing & QR Check-in API",
+		"description": "Comprehensive Postman test collection for the FestPass backend assessment, covering normal workflows, capacity limits, unguessable QR generation, one-time check-in, and safety guards.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Fest Events",
+			"item": [
+				{
+					"name": "1.1 Create Event (Valid - 201 Created)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Spring TechFest 2026\",\n  \"description\": \"Annual College Cultural and Technical Symposium\",\n  \"venue\": \"Main Auditorium, Campus Block C\",\n  \"eventDate\": \"2026-10-15T18:00:00\",\n  \"capacity\": 100,\n  \"ticketPrice\": 250.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.2 Create Event (Validation Failure - 400 Bad Request)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"\",\n  \"venue\": \"\",\n  \"eventDate\": \"2026-10-15T18:00:00\",\n  \"capacity\": 0,\n  \"ticketPrice\": -10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.3 List All Events (200 OK)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.4 Get Event By ID (200 OK)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.5 Get Event By Unknown ID (404 Not Found)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/9999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"9999"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.6 Update Event Capacity (Safe - 200 OK)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"capacity\": 150,\n  \"venue\": \"Auditorium Hall B\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.7 Update Event Capacity Below Issued (Conflict - 409 Conflict)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"capacity\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.8 Get Attendance Headcount vs Capacity (200 OK)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/1/attendance",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"1",
+								"attendance"
+							]
+						}
+					}
+				},
+				{
+					"name": "1.9 Delete Event with Existing Tickets (Conflict - 409 Conflict)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"1"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Tickets & QR Check-in",
+			"item": [
+				{
+					"name": "2.1 Issue Ticket (201 Created)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventId\": 1,\n  \"attendeeName\": \"Rohit Sharma\",\n  \"attendeeEmail\": \"rohit.sharma@college.edu\",\n  \"attendeePhone\": \"+91 9876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tickets/issue",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"issue"
+							]
+						}
+					}
+				},
+				{
+					"name": "2.2 Get Ticket by ID (200 OK)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/tickets/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"1"
+							]
+						}
+					}
+				},
+				{
+					"name": "2.3 Validate QR Check-in (First Time - 200 OK)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qrCode\": \"REPLACE_WITH_ISSUED_QR_CODE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tickets/check-in",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"check-in"
+							]
+						}
+					}
+				},
+				{
+					"name": "2.4 Validate QR Check-in (Duplicate Attempt - 409 Conflict)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qrCode\": \"REPLACE_WITH_ISSUED_QR_CODE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tickets/check-in",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"check-in"
+							]
+						}
+					}
+				},
+				{
+					"name": "2.5 Validate Unknown QR Check-in (404 Not Found)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qrCode\": \"FP-NON-EXISTENT-QR-STRING\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tickets/check-in",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tickets",
+								"check-in"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		}
+	]
+}
